@@ -1,4 +1,4 @@
-name: Deploy Frontend to Vercel - Debug
+name: Deploy Frontend to Vercel - test
 
 on:
   push:
@@ -10,52 +10,32 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 18
-
-      - name: Debug Info
-        run: |
-          echo "📁 Current directory:"
-          pwd
-          echo "🗂 Listing files in root:"
-          ls -la
-          echo "🗂 Listing files in client:"
-          ls -la ./client || echo "⚠️ No client directory found"
-
-      - name: Check environment variables
-        run: |
-          [ -z "${{ secrets.VERCEL_TOKEN }}" ] && echo "❌ Missing VERCEL_TOKEN" && exit 1 || echo "✅ VERCEL_TOKEN is set"
-          [ -z "${{ secrets.VERCEL_ORG_ID }}" ] && echo "❌ Missing VERCEL_ORG_ID" && exit 1 || echo "✅ VERCEL_ORG_ID is set"
-          [ -z "${{ secrets.VERCEL_PROJECT_ID }}" ] && echo "❌ Missing VERCEL_PROJECT_ID" && exit 1 || echo "✅ VERCEL_PROJECT_ID is set"
 
       - name: Install and Build
         working-directory: ./client
         run: |
-          echo "Installing dependencies..."
           npm ci
-          echo "Building project..."
           npm run build
 
-      - name: Check build output
+      - name: Debug directory contents
         run: |
-          echo "📦 Build directory contents:"
-          ls -R ./client/dist || echo "⚠️ No dist directory found"
+          echo "📁 Current directory:"
+          pwd
+          echo "🧩 Files:"
+          ls -R ./client
 
-      # 🔍 Paso de depuración adicional
-      - name: Show Vercel CLI version
-        run: npx vercel --version
+      - name: Clear old Vercel credentials
+        run: rm -rf ~/.vercel
 
-      # 🚀 Deploy
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          working-directory: ./client
-          vercel-args: '--prebuilt --confirm --debug --build-env CI=false --env NODE_ENV=production --local-config ./client/vercel.json'
+          vercel-args: '--prebuilt --debug --confirm'
