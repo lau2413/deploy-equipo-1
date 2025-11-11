@@ -10,32 +10,46 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout del repositorio
       - uses: actions/checkout@v4
 
+      # 2️⃣ Configurar Node.js
       - uses: actions/setup-node@v4
         with:
           node-version: 18
 
-      - name: Install and Build
+      # 3️⃣ Verificar variables de entorno
+      - name: 🔍 Check Vercel environment variables
+        run: |
+          if [ -z "${{ secrets.VERCEL_TOKEN }}" ]; then echo "❌ Missing VERCEL_TOKEN"; exit 1; else echo "✅ VERCEL_TOKEN is set"; fi
+          if [ -z "${{ secrets.VERCEL_ORG_ID }}" ]; then echo "❌ Missing VERCEL_ORG_ID"; exit 1; else echo "✅ VERCEL_ORG_ID is set"; fi
+          if [ -z "${{ secrets.VERCEL_PROJECT_ID }}" ]; then echo "❌ Missing VERCEL_PROJECT_ID"; exit 1; else echo "✅ VERCEL_PROJECT_ID is set"; fi
+
+      # 4️⃣ Instalar dependencias y compilar el proyecto
+      - name: ⚙️ Install and Build
         working-directory: ./client
         run: |
           npm ci
           npm run build
+          echo "✅ Build completed successfully"
 
-      - name: Debug directory contents
+      # 5️⃣ Mostrar estructura de salida para depuración
+      - name: 🧩 Show build directory
+        working-directory: ./client/dist
         run: |
-          echo "📁 Current directory:"
-          pwd
-          echo "🧩 Files:"
-          ls -R ./client
+          echo "Build directory structure:"
+          ls -la
 
-      - name: Clear old Vercel credentials
-        run: rm -rf ~/.vercel
-
-      - name: Deploy to Vercel
+      # 6️⃣ Desplegar en Vercel
+      - name: 🚀 Deploy to Vercel
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prebuilt --debug --confirm'
+          working-directory: ./client
+          vercel-args: '--prod --debug --confirm'
+
+      # 7️⃣ Confirmar finalización
+      - name: ✅ Deployment finished
+        run: echo "🎉 Deployment to Vercel completed successfully!"
