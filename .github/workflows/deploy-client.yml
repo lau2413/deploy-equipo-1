@@ -2,7 +2,8 @@ name: Deploy Frontend to Vercel
 
 on:
   push:
-    branches: [main, stage, development]
+    branches: 
+     - '**'
 
 jobs:
   build-and-deploy:
